@@ -45,6 +45,8 @@ const (
 	EventOAApprovalInstanceStarted    = "user_oa_approval_instance_started"
 	EventOAApprovalInstanceTerminated = "user_oa_approval_instance_terminated"
 	EventOAApprovalInstanceFinished   = "user_oa_approval_instance_finished"
+	EventHRMRegularLifecycleChanged   = "user_hrm_regular_lifecycle_changed"
+	EventHRMTransferLifecycleChanged  = "user_hrm_transfer_lifecycle_changed"
 )
 
 const (
@@ -339,6 +341,28 @@ var definitions = []Definition{
 		DisplayName:    "审批单完成",
 		Description:    "审批实例完成，发送给审批单发起人",
 		Category:       "oa",
+		RuleType:       "all",
+		Status:         StatusEnabled,
+		RequiredParams: nil,
+		Auth:           map[string]any{"identity": "user"},
+		Public:         true,
+	},
+	{
+		EventKey:       EventHRMRegularLifecycleChanged,
+		DisplayName:    "员工转正生命周期变更",
+		Description:    "当前用户的员工转正生命周期发生变更",
+		Category:       "hr",
+		RuleType:       "all",
+		Status:         StatusEnabled,
+		RequiredParams: nil,
+		Auth:           map[string]any{"identity": "user"},
+		Public:         true,
+	},
+	{
+		EventKey:       EventHRMTransferLifecycleChanged,
+		DisplayName:    "员工调岗生命周期变更",
+		Description:    "当前用户的员工调岗生命周期发生变更",
+		Category:       "hr",
 		RuleType:       "all",
 		Status:         StatusEnabled,
 		RequiredParams: nil,

@@ -281,6 +281,7 @@ func TestEventSkillFrontmatterAdvertisesGroupMemberLifecycle(t *testing.T) {
 			"群成员退出",
 			"审批任务创建/完成/转交",
 			"审批实例发起/终止/完成",
+			"员工转正/调岗",
 		} {
 			if !strings.Contains(frontmatter, required) {
 				t.Errorf("%s frontmatter missing event discovery trigger %q", path, required)
@@ -305,8 +306,9 @@ func TestStandaloneEventSkillOwnsAllPersonalEventContracts(t *testing.T) {
 		"../dingtalk-shared/SKILL.md",
 		"<!-- dws-intent: event.listen.im -->",
 		"<!-- dws-intent: event.listen.oa -->",
+		"<!-- dws-intent: event.listen.hr -->",
 		"16 个 EventKey",
-		"22 个公开个人 EventKey",
+		"24 个公开 EventKey",
 	} {
 		if !strings.Contains(string(skillContent), required) {
 			t.Errorf("%s missing standalone event contract %q", skillPath, required)
@@ -319,6 +321,7 @@ func TestStandaloneEventSkillOwnsAllPersonalEventContracts(t *testing.T) {
 		"event-im-operations.md",
 		"event-im-output.md",
 		"event-im.md",
+		"event-hr.md",
 		"event-oa.md",
 	}
 	var combined strings.Builder
@@ -415,6 +418,7 @@ func TestMiscSkillDoesNotOwnPersonalEvent(t *testing.T) {
 		"event-im-lifecycle.md",
 		"event-im-operations.md",
 		"event-im-output.md",
+		"event-hr.md",
 		"event-oa.md",
 	}
 	for _, name := range retiredNames {

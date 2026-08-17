@@ -59,6 +59,8 @@ func TestPersonalEventListHidesSchemaIDs(t *testing.T) {
 				personal.EventGroupMemberAdded,
 				personal.EventGroupMemberExited,
 				personal.EventGroupDisbanded,
+				personal.EventHRMRegularLifecycleChanged,
+				personal.EventHRMTransferLifecycleChanged,
 			} {
 				if !strings.Contains(got, eventKey) {
 					t.Fatalf("list output missing %s: %s", eventKey, got)

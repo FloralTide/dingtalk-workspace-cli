@@ -52,9 +52,36 @@ func TestCatalogEnabledEvents(t *testing.T) {
 		EventOAApprovalInstanceStarted,
 		EventOAApprovalInstanceTerminated,
 		EventOAApprovalInstanceFinished,
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
 	}
 	if !reflect.DeepEqual(keys, want) {
 		t.Fatalf("keys = %#v, want %#v", keys, want)
+	}
+}
+
+func TestHRMEventCatalogDefinitions(t *testing.T) {
+	items := Catalog("hr", true, false)
+	wantKeys := []string{
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
+	}
+	if len(items) != len(wantKeys) {
+		t.Fatalf("Catalog(hr) = %#v, want %d events", items, len(wantKeys))
+	}
+	for i, item := range items {
+		if item.EventKey != wantKeys[i] {
+			t.Fatalf("Catalog(hr)[%d].event_key = %q, want %q", i, item.EventKey, wantKeys[i])
+		}
+		if item.Category != "hr" || item.RuleType != "all" || item.Status != StatusEnabled || !item.Public {
+			t.Fatalf("Catalog(hr)[%d] = %#v, want public enabled hr/all event", i, item)
+		}
+		if len(item.RequiredParams) != 0 || item.Constraints != nil {
+			t.Fatalf("Catalog(hr)[%d] parameters = %#v/%#v, want none", i, item.RequiredParams, item.Constraints)
+		}
+		if item.Auth["identity"] != "user" {
+			t.Fatalf("Catalog(hr)[%d].auth = %#v, want user identity", i, item.Auth)
+		}
 	}
 }
 
@@ -160,6 +187,8 @@ func TestSchemaDocumentsDefaultToTransportEnvelope(t *testing.T) {
 		EventOAApprovalInstanceStarted,
 		EventOAApprovalInstanceTerminated,
 		EventOAApprovalInstanceFinished,
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
 	} {
 		t.Run(eventKey, func(t *testing.T) {
 			def, ok := Lookup(eventKey)
@@ -474,6 +503,38 @@ func TestGroupLifecycleSchemaDocumentsUseConservativePayload(t *testing.T) {
 	}
 }
 
+func TestHRMLifecycleSchemaDocumentsUseConservativePayload(t *testing.T) {
+	wantProperties := []string{"type", "event_id", "timestamp", "subscribe_id", "payload"}
+	for _, eventKey := range []string{EventHRMRegularLifecycleChanged, EventHRMTransferLifecycleChanged} {
+		t.Run(eventKey, func(t *testing.T) {
+			def, ok := Lookup(eventKey)
+			if !ok {
+				t.Fatalf("Lookup(%q) failed", eventKey)
+			}
+			if def.Category != "hr" || def.RuleType != "all" || len(def.RequiredParams) != 0 {
+				t.Fatalf("definition = %#v, want hr/all without target parameters", def)
+			}
+			doc := BuildSchemaDocumentForMode(def, true)
+			if doc.JQRootPath != "." {
+				t.Fatalf("jq_root_path = %q, want .", doc.JQRootPath)
+			}
+			props, ok := doc.Schema["properties"].(map[string]any)
+			if !ok || len(props) != len(wantProperties) {
+				t.Fatalf("schema.properties = %#v, want exactly %d fields", doc.Schema["properties"], len(wantProperties))
+			}
+			for _, name := range wantProperties {
+				if _, ok := props[name].(map[string]any); !ok {
+					t.Fatalf("schema.properties.%s = %#v, want object", name, props[name])
+				}
+			}
+			payload := props["payload"].(map[string]any)
+			if payload["type"] != "object" || payload["additionalProperties"] != true {
+				t.Fatalf("schema.properties.payload = %#v, want open object", payload)
+			}
+		})
+	}
+}
+
 func TestOAEventSchemaDocumentsMatchOutputDTO(t *testing.T) {
 	tests := []struct {
 		eventKey   string
@@ -635,6 +696,8 @@ func TestBuildRuleParamAllEvents(t *testing.T) {
 		EventOAApprovalInstanceStarted,
 		EventOAApprovalInstanceTerminated,
 		EventOAApprovalInstanceFinished,
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
 	} {
 		t.Run(eventKey, func(t *testing.T) {
 			rule, param, err := BuildRuleParam(eventKey, RuleOptions{})
@@ -847,6 +910,8 @@ func TestSupportsMessageFilter(t *testing.T) {
 		EventOAApprovalInstanceStarted,
 		EventOAApprovalInstanceTerminated,
 		EventOAApprovalInstanceFinished,
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
 		"unknown_event",
 	} {
 		if SupportsMessageFilter(eventKey) {

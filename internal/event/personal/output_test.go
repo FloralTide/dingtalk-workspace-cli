@@ -449,6 +449,84 @@ func TestCrossPlatformCoverageProjectOutputGroupLifecycleEvents(t *testing.T) {
 	}
 }
 
+func TestCrossPlatformCoverageProjectOutputHRMLifecycleEvents(t *testing.T) {
+	for _, eventKey := range []string{EventHRMRegularLifecycleChanged, EventHRMTransferLifecycleChanged} {
+		t.Run(eventKey, func(t *testing.T) {
+			data := fmt.Sprintf(`{
+				"eventId":"hr-event",
+				"eventKey":%q,
+				"occurredAtMs":1786960000123,
+				"subId":"hr-data-sub",
+				"payload":{
+					"uid":100001,
+					"corpid":"internal-corp",
+					"clientId":"internal-client",
+					"filterSubId":"internal-filter",
+					"bizid":"internal-biz",
+					"orgId":100002,
+					"sourceId":"open",
+					"event_time":1786960000000,
+					"body":{
+						"employeeId":"employee-1",
+						"changeType":"sample-only",
+						"operator":{"uid":"business-user-1"}
+					}
+				}
+			}`, eventKey)
+			projected, err := ProjectOutput(transport.Event{
+				EventID:     "outer-event",
+				EventType:   eventKey,
+				SubscribeID: "outer-sub",
+				Data:        data,
+			})
+			if err != nil {
+				t.Fatalf("ProjectOutput() error = %v", err)
+			}
+			got, ok := projected.(HRMLifecycleEventOutput)
+			if !ok {
+				t.Fatalf("ProjectOutput() type = %T", projected)
+			}
+			if got.Type != eventKey || got.EventID != "hr-event" || got.Timestamp != 1786960000123 || got.SubscribeID != "outer-sub" {
+				t.Fatalf("common fields = %#v", got)
+			}
+			for _, internal := range []string{"uid", "corpid", "clientId", "filterSubId", "bizid", "orgId", "sourceId"} {
+				if _, ok := got.Payload[internal]; ok {
+					t.Fatalf("payload retained internal field %q: %#v", internal, got.Payload)
+				}
+			}
+			body, ok := got.Payload["body"].(map[string]any)
+			if !ok || body["employeeId"] != "employee-1" || body["changeType"] != "sample-only" {
+				t.Fatalf("payload body = %#v", got.Payload["body"])
+			}
+			operator := body["operator"].(map[string]any)
+			if operator["uid"] != "business-user-1" {
+				t.Fatalf("nested business uid was removed: %#v", operator)
+			}
+		})
+	}
+}
+
+func TestCrossPlatformCoverageProjectOutputRejectsInvalidHRMLifecyclePayloads(t *testing.T) {
+	for _, eventKey := range []string{EventHRMRegularLifecycleChanged, EventHRMTransferLifecycleChanged} {
+		for _, payload := range []string{"", `,"payload":null`, `,"payload":{}`} {
+			t.Run(eventKey+"/"+payload, func(t *testing.T) {
+				ev := transport.Event{
+					EventID:   "outer-event",
+					EventType: eventKey,
+					Data:      fmt.Sprintf(`{"eventKey":%q%s}`, eventKey, payload),
+				}
+				projected, err := ProjectOutput(ev)
+				if err == nil || !strings.Contains(err.Error(), "decode personal HR lifecycle payload") {
+					t.Fatalf("ProjectOutput() error = %v, want HR lifecycle payload context", err)
+				}
+				if got, ok := projected.(transport.Event); !ok || !reflect.DeepEqual(got, ev) {
+					t.Fatalf("ProjectOutput() fallback = %#v, want %#v", projected, ev)
+				}
+			})
+		}
+	}
+}
+
 func TestCrossPlatformCoverageProjectOutputOAEvents(t *testing.T) {
 	tests := []struct {
 		eventKey string

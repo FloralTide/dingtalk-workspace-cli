@@ -1,6 +1,6 @@
 ---
 name: dingtalk-event
-description: 钉钉个人 IM 与 OA 审批事件长连接监听。Use when 用户说监听消息/@我/某人/某群/全部消息、已读/撤回/reaction、群成员加入/群成员退出/群状态变化，或监听审批任务创建/完成/转交、审批实例发起/终止/完成。命令前缀：dws event。
+description: 钉钉个人 IM、OA 审批与 HR 生命周期事件长连接监听。Use when 用户说监听消息/@我/某人/某群/全部消息、已读/撤回/reaction、群成员加入/群成员退出/群状态变化，监听审批任务创建/完成/转交、审批实例发起/终止/完成，或员工转正/调岗生命周期变化。命令前缀：dws event。
 metadata:
   cli_version: ">=0.2.14"
   category: product
@@ -9,11 +9,11 @@ metadata:
       - dws
 ---
 
-# 钉钉个人 IM 与 OA 审批事件
+# 钉钉个人 IM、OA 审批与 HR 生命周期事件
 
 > **前置：执行 `dws` 前必须完整读取 [`dingtalk-shared`](../dingtalk-shared/SKILL.md)。**Shared references 仅按需加载。
 
-本 Skill 只负责未来个人 IM/OA 实时事件；发送和历史消息走 `dingtalk-chat`，审批查询与处理走 `dingtalk-misc` 的 OA，开放平台应用事件配置走其 DevApp。子 reference 按需加载。
+本 Skill 只负责未来个人 IM/OA/HR 实时事件；发送和历史消息走 `dingtalk-chat`，审批查询与处理走 `dingtalk-misc`，开放平台应用事件配置走 DevApp。子 reference 按需加载。
 
 实时监听必须使用事件长连接，不写轮询脚本，不用历史消息或审批列表查询模拟事件。高频 IM 意图优先交给 `dws event +listen-im`；它在 CLI 内解析自然目标、选择 EventKey，并复用现有订阅与 bus 生命周期。OA 审批事件使用显式 `dws event consume`。
 
@@ -22,6 +22,8 @@ metadata:
 `event consume` fallback。
 
 <!-- dws-intent: event.listen.oa -->OA 审批任务与审批实例的实时变化使用 `dws event consume`；查询或操作已有审批走 `dws oa`，不要用轮询模拟事件。
+
+<!-- dws-intent: event.listen.hr -->员工转正或调岗生命周期变化使用 `dws event consume`；不要轮询员工档案模拟事件。
 
 ## Golden Route
 
@@ -35,6 +37,8 @@ metadata:
 | 群改名、成员进退、群解散 | 读取 [EventKey 索引](references/event-im-keys.md)，使用精确 `event consume` EventKey |
 | OA 审批任务或实例事件 | 读取 [OA 事件参考](references/event-oa.md)，使用精确 `event consume` EventKey |
 | 查看 OA 事件目录 | `dws event list --category oa` |
+| 员工转正或调岗生命周期事件 | 读取 [HR 事件参考](references/event-hr.md)，使用精确 `event consume` EventKey |
+| 查看 HR 事件目录 | `dws event list --category hr` |
 | 已知 EventKey 或需要底层订阅控制 | `dws event consume`；参数与约束以 leaf Schema 为准 |
 | 查看状态 / 停止 | `dws event status` / `dws event stop <subscribe_id> --dry-run`，确认后再 `--yes` |
 
@@ -45,27 +49,15 @@ metadata:
 - `group` 必须且只能传 `--chat-id` 或 `--chat-query` 之一。
 - `--query` 只用于纯 `message` 监听；混入 reaction/read/recall 时不得使用。
 
-OA 事件不进入 `+listen-im`。六个公开 OA EventKey 都订阅当前 OAuth 用户相关的全部审批事件，使用 `ruleType=all`、`filterRule={}`；不接受 `--user`、`--open-dingtalk-id`、`--group`、`--query` 或 `--filter-json`。六项可放入同一个 consume，每项建立独立订阅并共享 bus。
+OA 和 HR 事件不进入 `+listen-im`，均使用 `ruleType=all`、`filterRule={}`，不接受目标或消息过滤参数；多项可放入同一个 consume，各自订阅并共享 bus。
 
 自然姓名和群名由 CLI 内部唯一解析：零命中或多候选返回结构化失败，在创建任何订阅前停止。`--dry-run` 走同一解析链。解析、监听、状态和停止必须使用同一个 `--profile`，不得跨组织搬运 ID。
 
 ### 兼容 EventKey 索引
 
-`+listen-im` 覆盖高频路径；只有需要精确底层控制时才直接使用以下 16 个 EventKey：
+`+listen-im` 覆盖高频路径；精确底层控制使用 16 个 EventKey，完整列表见 [EventKey 索引](references/event-im-keys.md)。
 
-```text
-user_im_message_receive_at
-user_im_message_receive_o2o        user_im_message_receive_user
-user_im_message_receive_group      user_im_message_receive_o2o_all
-user_im_message_receive_group_all  user_im_message_read_o2o
-user_im_message_read_group         user_im_message_recall_o2o
-user_im_message_recall_group       user_im_message_reaction_o2o
-user_im_message_reaction_group     user_im_group_updated
-user_im_group_member_added         user_im_group_member_exited
-user_im_group_disbanded
-```
-
-六个 OA EventKey 及其输出字段见 [OA 事件参考](references/event-oa.md)。
+兼容键：`user_im_message_receive_o2o_all`、`user_im_message_receive_group_all`、`user_im_group_updated`、`user_im_group_member_added`、`user_im_group_member_exited`、`user_im_group_disbanded`。
 
 用户类事件传 `--user` 或 `--open-dingtalk-id`，群类事件传 `--group`。群生命周期输出可含 `operator_open_dingtalk_id` 和 `members`；成员项使用 `open_dingtalk_id`。精确组合、兼容性和 Filter 规则见 reference。
 
@@ -80,7 +72,7 @@ kind + events + target
 → 一次 event consume 生命周期
 ```
 
-订阅创建/复用、单 bus、多 consumer、ready marker、扁平 NDJSON、超时/取消、部分失败回滚和退出清理全部复用现有 Runtime。低频 EventKey、群生命周期、OA 审批、Filter DSL、原始 envelope、复用 subscribe_id 等仍由 `event consume` 承担。
+订阅创建/复用、单 bus、多 consumer、ready、扁平 NDJSON、取消、回滚和清理复用现有 Runtime。低频 EventKey、群生命周期、OA/HR、Filter DSL、原始 envelope、复用 subscribe_id 仍由 `event consume` 承担。
 
 ## 运行与结果契约
 
@@ -93,12 +85,13 @@ kind + events + target
 - 事件只负责监听；需要回复时按 [输出与 Chat 交接](references/event-im-output.md) 把真实 `conversation_id` 或 `sender_open_dingtalk_id` 交给 `dws chat +messages-send`，不要从显示名猜 ID。
 - 扁平消息/动作字段按事件类型读取：已读为 `reader_open_dingtalk_id`，撤回为 `recaller_open_dingtalk_id`，回应为 `reaction_name`、`operation_type`。媒体优先通过聊天读取命令加 `--download-resources`；已知消息 ID 的底层降级入口是 `dws chat message download-media`。
 - OA 扁平事件提供审批实例、任务和状态字段；字段差异、原始回退条件及与 OA 命令的稳定 ID 交接以 [OA 事件参考](references/event-oa.md) 为准。
+- HR 扁平事件当前只承诺公共字段与开放 `payload`；字段以 [HR 事件参考](references/event-hr.md) 为准。
 
 ## 安全与失败处理
 
 - `event stop` 会取消订阅并影响本地 consumer：先 `--dry-run`，用户确认后再加 `--yes`。
 - 多事件属于一次原始操作；任一订阅启动失败时 Runtime 回滚本次已创建项，不拆成新命令绕过重试预算。
-- 这套 `0/2/1` 是 **Agent/host** 编排预算，适用于全部 22 个公开个人 EventKey（16 个 IM + 6 个 OA）：`retryable=false` 对应 `max_additional_attempts=0`；`retryable=true` 对应 `max_additional_attempts=2`；`retryable=unknown` 对应 `max_additional_attempts=1`。它不是 CLI 持久化硬总次数上限；每次调用最多创建一次，进程内不会自动重试，CLI 也不持久化或计算跨调用的 Agent/host 尝试次数。
+- 这套 `0/2/1` 是 **Agent/host** 编排预算，适用于全部 24 个公开 EventKey（16 个 IM + 6 个 OA + 2 个 HR）：`retryable=false` 对应 `max_additional_attempts=0`；`retryable=true` 对应 `max_additional_attempts=2`；`retryable=unknown` 对应 `max_additional_attempts=1`。它不是 CLI 持久化硬总次数上限；每次调用最多创建一次，进程内不会自动重试，CLI 也不持久化或计算跨调用的 Agent/host 尝试次数。
 - 重试必须遵守 `retry_after_seconds` / `next_retry_at`。遇到 `in_flight`、`cooldown`、`terminal_hold` 不并发或递归重启同一逻辑订阅，也不换 `subscribe_id` / `trace_id` 绕过保护。
 - 认证、profile、订阅保护状态和 bus 排障按失败类型读取 [订阅运维](references/event-im-operations.md)，不要在正常路径预加载完整运维手册。
 
@@ -126,3 +119,4 @@ kind + events + target
 | 扁平字段与事件到 Chat 交接 | [event-im-output.md](references/event-im-output.md) | 解析事件或自动回复 |
 | Filter、status/stop、重试与排障 | [event-im-operations.md](references/event-im-operations.md) | 订阅控制或失败恢复 |
 | OA 审批事件 | [event-oa.md](references/event-oa.md) | 选择六个 OA EventKey、组合消费或解析审批字段 |
+| HR 生命周期事件 | [event-hr.md](references/event-hr.md) | 选择两个 HR EventKey、理解 HSF 后端边界和保守 payload |

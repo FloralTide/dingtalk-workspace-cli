@@ -209,6 +209,18 @@ type OAApprovalInstanceFinishedOutput struct {
 	EventTime         int64  `json:"event_time" description:"审批实例事件业务时间" format:"timestamp_ms"`
 }
 
+// HRMLifecycleEventOutput keeps the HR lifecycle payload open until the HR
+// provider publishes a reviewed field contract. The stable transport and
+// subscription identity stays top-level while provider-owned business fields
+// remain under payload.
+type HRMLifecycleEventOutput struct {
+	Type        string         `json:"type" description:"事件类型，固定为当前 event_key"`
+	EventID     string         `json:"event_id" description:"事件 ID，可用于去重"`
+	Timestamp   int64          `json:"timestamp" description:"事件发生时间戳" format:"timestamp_ms"`
+	SubscribeID string         `json:"subscribe_id" description:"订阅 ID"`
+	Payload     map[string]any `json:"payload" description:"HR 生命周期事件业务数据，字段以服务端实际推送为准" additional_properties:"true"`
+}
+
 type GroupMemberEventOutput struct {
 	Type                   string                   `json:"type" description:"事件类型，固定为当前 event_key"`
 	EventID                string                   `json:"event_id" description:"事件 ID，可用于去重"`
@@ -460,6 +472,18 @@ func ProjectOutput(ev transport.Event) (any, error) {
 		}, nil
 	case isOAEvent(eventType):
 		return projectOAApprovalEvent(ev, base, data.Payload)
+	case isHRMEvent(eventType):
+		payload, err := decodeConservativePayload(data.Payload)
+		if err != nil {
+			return ev, fmt.Errorf("decode personal HR lifecycle payload: %w", err)
+		}
+		return HRMLifecycleEventOutput{
+			Type:        base.Type,
+			EventID:     base.EventID,
+			Timestamp:   base.Timestamp,
+			SubscribeID: base.SubscribeID,
+			Payload:     payload,
+		}, nil
 	default:
 		return ev, fmt.Errorf("unsupported personal event type %q", eventType)
 	}
@@ -875,6 +899,8 @@ func outputTypeForEvent(eventKey string) reflect.Type {
 		return reflect.TypeOf(OAApprovalInstanceTerminatedOutput{})
 	case eventKey == EventOAApprovalInstanceFinished:
 		return reflect.TypeOf(OAApprovalInstanceFinishedOutput{})
+	case isHRMEvent(eventKey):
+		return reflect.TypeOf(HRMLifecycleEventOutput{})
 	default:
 		return reflect.TypeOf(baseEventOutput{})
 	}
@@ -908,6 +934,11 @@ func isOAEvent(eventKey string) bool {
 		eventKey == EventOAApprovalInstanceStarted ||
 		eventKey == EventOAApprovalInstanceTerminated ||
 		eventKey == EventOAApprovalInstanceFinished
+}
+
+func isHRMEvent(eventKey string) bool {
+	return eventKey == EventHRMRegularLifecycleChanged ||
+		eventKey == EventHRMTransferLifecycleChanged
 }
 
 func isOAApprovalTaskEvent(eventKey string) bool {
