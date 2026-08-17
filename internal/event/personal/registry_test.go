@@ -696,8 +696,6 @@ func TestBuildRuleParamAllEvents(t *testing.T) {
 		EventOAApprovalInstanceStarted,
 		EventOAApprovalInstanceTerminated,
 		EventOAApprovalInstanceFinished,
-		EventHRMRegularLifecycleChanged,
-		EventHRMTransferLifecycleChanged,
 	} {
 		t.Run(eventKey, func(t *testing.T) {
 			rule, param, err := BuildRuleParam(eventKey, RuleOptions{})
@@ -706,6 +704,32 @@ func TestBuildRuleParamAllEvents(t *testing.T) {
 			}
 			if rule != "all" || len(param) != 0 {
 				t.Fatalf("rule = %q, param = %#v; want all and empty map", rule, param)
+			}
+			for name, opts := range map[string]RuleOptions{
+				"user":             {UserID: "staff-1"},
+				"open-dingtalk-id": {OpenDingTalkID: "open-user-1"},
+				"group":            {GroupID: "cid-1"},
+			} {
+				if _, _, err := BuildRuleParam(eventKey, opts); err == nil || !strings.Contains(err.Error(), "--"+name+" is not supported for "+eventKey) {
+					t.Fatalf("%s error = %v, want unsupported flag", name, err)
+				}
+			}
+		})
+	}
+}
+
+func TestBuildRuleParamHRMEventsOmitUnsupportedFilterRule(t *testing.T) {
+	for _, eventKey := range []string{
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
+	} {
+		t.Run(eventKey, func(t *testing.T) {
+			rule, param, err := BuildRuleParam(eventKey, RuleOptions{})
+			if err != nil {
+				t.Fatalf("BuildRuleParam() error = %v", err)
+			}
+			if rule != "all" || param != nil {
+				t.Fatalf("rule = %q, param = %#v; want all and nil", rule, param)
 			}
 			for name, opts := range map[string]RuleOptions{
 				"user":             {UserID: "staff-1"},

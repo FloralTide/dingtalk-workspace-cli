@@ -49,7 +49,7 @@ metadata:
 - `group` 必须且只能传 `--chat-id` 或 `--chat-query` 之一。
 - `--query` 只用于纯 `message` 监听；混入 reaction/read/recall 时不得使用。
 
-OA 和 HR 事件不进入 `+listen-im`，均使用 `ruleType=all`、`filterRule={}`，不接受目标或消息过滤参数；多项可放入同一个 consume，各自订阅并共享 bus。
+OA 和 HR 事件不进入 `+listen-im`，均使用 `ruleType=all`，不接受目标或消息过滤参数；OA 使用 `filterRule={}`，HR Provider 不支持过滤规则，因此 HR 请求省略 `filterRule`。多项可放入同一个 consume，各自订阅并共享 bus。
 
 自然姓名和群名由 CLI 内部唯一解析：零命中或多候选返回结构化失败，在创建任何订阅前停止。`--dry-run` 走同一解析链。解析、监听、状态和停止必须使用同一个 `--profile`，不得跨组织搬运 ID。
 

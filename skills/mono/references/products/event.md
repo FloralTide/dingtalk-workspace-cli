@@ -53,7 +53,7 @@
 | `user_hrm_regular_lifecycle_changed` | 当前用户的员工转正生命周期发生变化 | 无 |
 | `user_hrm_transfer_lifecycle_changed` | 当前用户的员工调岗生命周期发生变化 | 无 |
 
-只承认上表 24 个事件码。默认身份是当前 OAuth 用户。六个 OA 与两个 HR 事件均使用 `all`、空 `filterRule`，不需要目标参数。
+只承认上表 24 个事件码。默认身份是当前 OAuth 用户。六个 OA 与两个 HR 事件均使用 `all`，不需要目标参数；OA 使用空对象 `filterRule={}`，HR Provider 不支持过滤规则，因此 HR 请求省略 `filterRule`。
 
 ## Intent mapping
 

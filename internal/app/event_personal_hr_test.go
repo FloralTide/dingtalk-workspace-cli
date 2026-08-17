@@ -82,6 +82,13 @@ func TestCrossPlatformCoveragePersonalHRMEventListSchemaAndValidation(t *testing
 		if err := validatePersonalBusinessEventOptions(eventKey, personalConsumeOptions{}); err != nil {
 			t.Fatalf("HR event without target/filter options error = %v", err)
 		}
+		prepared, err := preparePersonalSubscription(personal.Identity{}, personalConsumeOptions{EventKey: eventKey})
+		if err != nil {
+			t.Fatalf("prepare HR subscription error = %v", err)
+		}
+		if prepared.RuleType != "all" || prepared.Request.RuleParam != nil || prepared.Request.Filter != nil {
+			t.Fatalf("prepared HR subscription = %#v, want all rule without filterRule", prepared)
+		}
 		for name, opts := range map[string]personalConsumeOptions{
 			"--user":             {UserID: "user-1"},
 			"--open-dingtalk-id": {OpenDingTalkID: "open-user-1"},

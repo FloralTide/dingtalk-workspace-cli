@@ -11,7 +11,7 @@
 | `user_hrm_regular_lifecycle_changed` | `all` | 当前用户的员工转正生命周期发生变化 | 无 |
 | `user_hrm_transfer_lifecycle_changed` | `all` | 当前用户的员工调岗生命周期发生变化 | 无 |
 
-CLI 使用当前 OAuth 用户身份，为每个事件发送 `ruleType=all`、`filterRule={}` 的独立订阅请求。不要添加 `--user`、`--open-dingtalk-id`、`--group`、`--query` 或 `--filter-json`。
+CLI 使用当前 OAuth 用户身份，为每个事件发送 `ruleType=all` 的独立订阅请求。HR Provider 不支持过滤规则，因此请求省略 `filterRule`。不要添加 `--user`、`--open-dingtalk-id`、`--group`、`--query` 或 `--filter-json`。
 
 ## Commands
 

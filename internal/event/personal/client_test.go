@@ -134,8 +134,8 @@ func TestClientCreateRuleBasedSubscriptionsUsesDocumentedRuleParam(t *testing.T)
 		{"oa_approval_instance_started", EventOAApprovalInstanceStarted, RuleOptions{}, map[string]any{}},
 		{"oa_approval_instance_terminated", EventOAApprovalInstanceTerminated, RuleOptions{}, map[string]any{}},
 		{"oa_approval_instance_finished", EventOAApprovalInstanceFinished, RuleOptions{}, map[string]any{}},
-		{"hrm_regular_lifecycle_changed", EventHRMRegularLifecycleChanged, RuleOptions{}, map[string]any{}},
-		{"hrm_transfer_lifecycle_changed", EventHRMTransferLifecycleChanged, RuleOptions{}, map[string]any{}},
+		{"hrm_regular_lifecycle_changed", EventHRMRegularLifecycleChanged, RuleOptions{}, nil},
+		{"hrm_transfer_lifecycle_changed", EventHRMTransferLifecycleChanged, RuleOptions{}, nil},
 		{"read_group", EventReadGroup, RuleOptions{GroupID: "cid-1"}, map[string]any{"openConversationId": "cid-1"}},
 		{"recall_group", EventRecallGroup, RuleOptions{GroupID: "cid-1"}, map[string]any{"openConversationId": "cid-1"}},
 		{"reaction_group", EventReactionGroup, RuleOptions{GroupID: "cid-1"}, map[string]any{"openConversationId": "cid-1"}},
@@ -148,10 +148,22 @@ func TestClientCreateRuleBasedSubscriptionsUsesDocumentedRuleParam(t *testing.T)
 		t.Run(tt.name, func(t *testing.T) {
 			var gotPath string
 			var gotReq dwsCreateSubscriptionRequest
+			var gotRaw map[string]json.RawMessage
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				gotPath = r.URL.Path
-				if err := json.NewDecoder(r.Body).Decode(&gotReq); err != nil {
+				var body json.RawMessage
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 					t.Errorf("decode request: %v", err)
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				if err := json.Unmarshal(body, &gotReq); err != nil {
+					t.Errorf("decode typed request: %v", err)
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				if err := json.Unmarshal(body, &gotRaw); err != nil {
+					t.Errorf("decode raw request: %v", err)
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
@@ -175,12 +187,21 @@ func TestClientCreateRuleBasedSubscriptionsUsesDocumentedRuleParam(t *testing.T)
 			if gotPath != "/subscription/user" || gotReq.EventKey != tt.eventKey {
 				t.Fatalf("path = %q, eventKey = %q", gotPath, gotReq.EventKey)
 			}
-			var gotRule map[string]any
-			if err := json.Unmarshal([]byte(gotReq.FilterRule), &gotRule); err != nil {
-				t.Fatalf("filterRule = %q: %v", gotReq.FilterRule, err)
-			}
-			if !reflect.DeepEqual(gotRule, tt.wantRule) {
-				t.Fatalf("filterRule = %#v, want %#v", gotRule, tt.wantRule)
+			if tt.wantRule == nil {
+				if gotReq.FilterRule != "" {
+					t.Fatalf("filterRule = %q, want empty", gotReq.FilterRule)
+				}
+				if _, ok := gotRaw["filterRule"]; ok {
+					t.Fatalf("request includes filterRule for %s: %s", tt.eventKey, gotRaw["filterRule"])
+				}
+			} else {
+				var gotRule map[string]any
+				if err := json.Unmarshal([]byte(gotReq.FilterRule), &gotRule); err != nil {
+					t.Fatalf("filterRule = %q: %v", gotReq.FilterRule, err)
+				}
+				if !reflect.DeepEqual(gotRule, tt.wantRule) {
+					t.Fatalf("filterRule = %#v, want %#v", gotRule, tt.wantRule)
+				}
 			}
 			if gotReq.Ext["ruleType"] != ruleType {
 				t.Fatalf("ext.ruleType = %#v, want %q", gotReq.Ext["ruleType"], ruleType)

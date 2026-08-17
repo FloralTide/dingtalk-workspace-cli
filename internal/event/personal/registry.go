@@ -55,16 +55,17 @@ const (
 )
 
 type Definition struct {
-	EventKey       string                `json:"event_key"`
-	DisplayName    string                `json:"display_name"`
-	Description    string                `json:"description"`
-	Category       string                `json:"category"`
-	RuleType       string                `json:"rule_type"`
-	Status         string                `json:"status"`
-	RequiredParams []string              `json:"required_params"`
-	Constraints    *ParameterConstraints `json:"constraints,omitempty"`
-	Auth           map[string]any        `json:"auth,omitempty"`
-	Public         bool                  `json:"-"`
+	EventKey            string                `json:"event_key"`
+	DisplayName         string                `json:"display_name"`
+	Description         string                `json:"description"`
+	Category            string                `json:"category"`
+	RuleType            string                `json:"rule_type"`
+	Status              string                `json:"status"`
+	RequiredParams      []string              `json:"required_params"`
+	Constraints         *ParameterConstraints `json:"constraints,omitempty"`
+	Auth                map[string]any        `json:"auth,omitempty"`
+	Public              bool                  `json:"-"`
+	OmitEmptyFilterRule bool                  `json:"-"`
 }
 
 type ParameterConstraints struct {
@@ -348,26 +349,28 @@ var definitions = []Definition{
 		Public:         true,
 	},
 	{
-		EventKey:       EventHRMRegularLifecycleChanged,
-		DisplayName:    "员工转正生命周期变更",
-		Description:    "当前用户的员工转正生命周期发生变更",
-		Category:       "hr",
-		RuleType:       "all",
-		Status:         StatusEnabled,
-		RequiredParams: nil,
-		Auth:           map[string]any{"identity": "user"},
-		Public:         true,
+		EventKey:            EventHRMRegularLifecycleChanged,
+		DisplayName:         "员工转正生命周期变更",
+		Description:         "当前用户的员工转正生命周期发生变更",
+		Category:            "hr",
+		RuleType:            "all",
+		Status:              StatusEnabled,
+		RequiredParams:      nil,
+		Auth:                map[string]any{"identity": "user"},
+		Public:              true,
+		OmitEmptyFilterRule: true,
 	},
 	{
-		EventKey:       EventHRMTransferLifecycleChanged,
-		DisplayName:    "员工调岗生命周期变更",
-		Description:    "当前用户的员工调岗生命周期发生变更",
-		Category:       "hr",
-		RuleType:       "all",
-		Status:         StatusEnabled,
-		RequiredParams: nil,
-		Auth:           map[string]any{"identity": "user"},
-		Public:         true,
+		EventKey:            EventHRMTransferLifecycleChanged,
+		DisplayName:         "员工调岗生命周期变更",
+		Description:         "当前用户的员工调岗生命周期发生变更",
+		Category:            "hr",
+		RuleType:            "all",
+		Status:              StatusEnabled,
+		RequiredParams:      nil,
+		Auth:                map[string]any{"identity": "user"},
+		Public:              true,
+		OmitEmptyFilterRule: true,
 	},
 }
 
@@ -509,6 +512,9 @@ func BuildRuleParam(eventKey string, opts RuleOptions) (ruleType string, rulePar
 		}
 		if groupID != "" {
 			return "", nil, fmt.Errorf("--group is not supported for %s", eventKey)
+		}
+		if def.OmitEmptyFilterRule {
+			return def.RuleType, nil, nil
 		}
 		return def.RuleType, map[string]any{}, nil
 	case "singleChat":
