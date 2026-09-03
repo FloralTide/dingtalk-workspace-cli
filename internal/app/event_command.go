@@ -83,7 +83,7 @@ func newEventCommand(globalFlags ...*GlobalFlags) *cobra.Command {
 		Selection: contract.ProductSelectionDecl{
 			AgentSummary: "实时监听当前用户相关的个人 IM、OA 审批与 HR 生命周期事件，并管理订阅生命周期",
 			UseWhen: []string{
-				"需要实时监听未来发生的个人消息、消息动作、群生命周期、OA 审批任务/实例或员工转正/调岗生命周期事件，或管理个人事件订阅生命周期",
+				"需要实时监听未来发生的个人消息、消息动作、群生命周期、OA 审批任务/实例或员工转正、调岗、入职、离职生命周期事件，或管理个人事件订阅生命周期",
 			},
 			AvoidWhen: []string{
 				"查历史聊天或主动发消息用 chat；查询或处理审批实例/任务用 oa；配置开放平台应用事件回调用 dev app event",
@@ -404,7 +404,7 @@ SIGTERM、关 stdin，或先用 dws event stop <subscribe_id> --dry-run 预览�
 				AgentSummary: "消费 OA、HR、群生命周期或需要底层控制的个人事件流；Agent 通常使用 --flatten 输出 NDJSON",
 				UseWhen: []string{
 					"需要监听六个公开 OA 审批任务/实例 EventKey 中的一个或多个事件",
-					"需要监听员工转正或调岗生命周期变更事件",
+					"需要监听员工转正、调岗、入职或离职生命周期变更事件",
 					"需要监听指定群的标题变更、成员进退群或群解散事件",
 					"用户显式给出原始 EventKey、Filter DSL、subscribe_id，要求原始 transport envelope，或需要普通 IM facade 不提供的高级多事件控制",
 				},

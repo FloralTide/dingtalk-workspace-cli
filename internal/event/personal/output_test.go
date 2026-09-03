@@ -450,7 +450,12 @@ func TestCrossPlatformCoverageProjectOutputGroupLifecycleEvents(t *testing.T) {
 }
 
 func TestCrossPlatformCoverageProjectOutputHRMLifecycleEvents(t *testing.T) {
-	for _, eventKey := range []string{EventHRMRegularLifecycleChanged, EventHRMTransferLifecycleChanged} {
+	for _, eventKey := range []string{
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
+	} {
 		t.Run(eventKey, func(t *testing.T) {
 			data := fmt.Sprintf(`{
 				"eventId":"hr-event",
@@ -507,7 +512,12 @@ func TestCrossPlatformCoverageProjectOutputHRMLifecycleEvents(t *testing.T) {
 }
 
 func TestCrossPlatformCoverageProjectOutputRejectsInvalidHRMLifecyclePayloads(t *testing.T) {
-	for _, eventKey := range []string{EventHRMRegularLifecycleChanged, EventHRMTransferLifecycleChanged} {
+	for _, eventKey := range []string{
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
+	} {
 		for _, payload := range []string{"", `,"payload":null`, `,"payload":{}`} {
 			t.Run(eventKey+"/"+payload, func(t *testing.T) {
 				ev := transport.Event{

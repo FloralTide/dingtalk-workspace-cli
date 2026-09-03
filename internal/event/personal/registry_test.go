@@ -54,6 +54,8 @@ func TestCatalogEnabledEvents(t *testing.T) {
 		EventOAApprovalInstanceFinished,
 		EventHRMRegularLifecycleChanged,
 		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
 	}
 	if !reflect.DeepEqual(keys, want) {
 		t.Fatalf("keys = %#v, want %#v", keys, want)
@@ -65,6 +67,8 @@ func TestHRMEventCatalogDefinitions(t *testing.T) {
 	wantKeys := []string{
 		EventHRMRegularLifecycleChanged,
 		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
 	}
 	if len(items) != len(wantKeys) {
 		t.Fatalf("Catalog(hr) = %#v, want %d events", items, len(wantKeys))
@@ -189,6 +193,8 @@ func TestSchemaDocumentsDefaultToTransportEnvelope(t *testing.T) {
 		EventOAApprovalInstanceFinished,
 		EventHRMRegularLifecycleChanged,
 		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
 	} {
 		t.Run(eventKey, func(t *testing.T) {
 			def, ok := Lookup(eventKey)
@@ -505,7 +511,12 @@ func TestGroupLifecycleSchemaDocumentsUseConservativePayload(t *testing.T) {
 
 func TestHRMLifecycleSchemaDocumentsUseConservativePayload(t *testing.T) {
 	wantProperties := []string{"type", "event_id", "timestamp", "subscribe_id", "payload"}
-	for _, eventKey := range []string{EventHRMRegularLifecycleChanged, EventHRMTransferLifecycleChanged} {
+	for _, eventKey := range []string{
+		EventHRMRegularLifecycleChanged,
+		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
+	} {
 		t.Run(eventKey, func(t *testing.T) {
 			def, ok := Lookup(eventKey)
 			if !ok {
@@ -722,6 +733,8 @@ func TestBuildRuleParamHRMEventsOmitUnsupportedFilterRule(t *testing.T) {
 	for _, eventKey := range []string{
 		EventHRMRegularLifecycleChanged,
 		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
 	} {
 		t.Run(eventKey, func(t *testing.T) {
 			rule, param, err := BuildRuleParam(eventKey, RuleOptions{})
@@ -936,6 +949,8 @@ func TestSupportsMessageFilter(t *testing.T) {
 		EventOAApprovalInstanceFinished,
 		EventHRMRegularLifecycleChanged,
 		EventHRMTransferLifecycleChanged,
+		EventHRMEntryLifecycleChanged,
+		EventHRMTerminationLifecycleChanged,
 		"unknown_event",
 	} {
 		if SupportsMessageFilter(eventKey) {

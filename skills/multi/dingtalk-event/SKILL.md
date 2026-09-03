@@ -1,6 +1,6 @@
 ---
 name: dingtalk-event
-description: 钉钉个人 IM、OA 审批与 HR 生命周期事件长连接监听。Use when 用户说监听消息/@我/某人/某群/全部消息、已读/撤回/reaction、群成员加入/群成员退出/群状态变化，监听审批任务创建/完成/转交、审批实例发起/终止/完成，或员工转正/调岗生命周期变化。命令前缀：dws event。
+description: 钉钉个人 IM、OA 审批与 HR 生命周期事件长连接监听。Use when 用户说监听消息/@我/某人/某群/全部消息、已读/撤回/reaction、群成员加入/群成员退出/群状态变化，监听审批任务创建/完成/转交、审批实例发起/终止/完成，或员工转正/调岗/入职/离职生命周期变化。命令前缀：dws event。
 metadata:
   cli_version: ">=0.2.14"
   category: product
@@ -23,7 +23,7 @@ metadata:
 
 <!-- dws-intent: event.listen.oa -->OA 审批任务与审批实例的实时变化使用 `dws event consume`；查询或操作已有审批走 `dws oa`，不要用轮询模拟事件。
 
-<!-- dws-intent: event.listen.hr -->员工转正或调岗生命周期变化使用 `dws event consume`；不要轮询员工档案模拟事件。
+<!-- dws-intent: event.listen.hr -->员工转正、调岗、入职或离职生命周期变化使用 `dws event consume`；不要轮询员工档案模拟事件。
 
 ## Golden Route
 
@@ -37,7 +37,7 @@ metadata:
 | 群改名、成员进退、群解散 | 读取 [EventKey 索引](references/event-im-keys.md)，使用精确 `event consume` EventKey |
 | OA 审批任务或实例事件 | 读取 [OA 事件参考](references/event-oa.md)，使用精确 `event consume` EventKey |
 | 查看 OA 事件目录 | `dws event list --category oa` |
-| 员工转正或调岗生命周期事件 | 读取 [HR 事件参考](references/event-hr.md)，使用精确 `event consume` EventKey |
+| 员工转正、调岗、入职或离职生命周期事件 | 读取 [HR 事件参考](references/event-hr.md)，使用精确 `event consume` EventKey |
 | 查看 HR 事件目录 | `dws event list --category hr` |
 | 已知 EventKey 或需要底层订阅控制 | `dws event consume`；参数与约束以 leaf Schema 为准 |
 | 查看状态 / 停止 | `dws event status` / `dws event stop <subscribe_id> --dry-run`，确认后再 `--yes` |
@@ -91,7 +91,7 @@ kind + events + target
 
 - `event stop` 会取消订阅并影响本地 consumer：先 `--dry-run`，用户确认后再加 `--yes`。
 - 多事件属于一次原始操作；任一订阅启动失败时 Runtime 回滚本次已创建项，不拆成新命令绕过重试预算。
-- 这套 `0/2/1` 是 **Agent/host** 编排预算，适用于全部 24 个公开 EventKey（16 个 IM + 6 个 OA + 2 个 HR）：`retryable=false` 对应 `max_additional_attempts=0`；`retryable=true` 对应 `max_additional_attempts=2`；`retryable=unknown` 对应 `max_additional_attempts=1`。它不是 CLI 持久化硬总次数上限；每次调用最多创建一次，进程内不会自动重试，CLI 也不持久化或计算跨调用的 Agent/host 尝试次数。
+- 这套 `0/2/1` 是 **Agent/host** 编排预算，适用于全部 26 个公开 EventKey（16 个 IM + 6 个 OA + 4 个 HR）：`retryable=false` 对应 `max_additional_attempts=0`；`retryable=true` 对应 `max_additional_attempts=2`；`retryable=unknown` 对应 `max_additional_attempts=1`。它不是 CLI 持久化硬总次数上限；每次调用最多创建一次，进程内不会自动重试，CLI 也不持久化或计算跨调用的 Agent/host 尝试次数。
 - 重试必须遵守 `retry_after_seconds` / `next_retry_at`。遇到 `in_flight`、`cooldown`、`terminal_hold` 不并发或递归重启同一逻辑订阅，也不换 `subscribe_id` / `trace_id` 绕过保护。
 - 认证、profile、订阅保护状态和 bus 排障按失败类型读取 [订阅运维](references/event-im-operations.md)，不要在正常路径预加载完整运维手册。
 
@@ -119,4 +119,4 @@ kind + events + target
 | 扁平字段与事件到 Chat 交接 | [event-im-output.md](references/event-im-output.md) | 解析事件或自动回复 |
 | Filter、status/stop、重试与排障 | [event-im-operations.md](references/event-im-operations.md) | 订阅控制或失败恢复 |
 | OA 审批事件 | [event-oa.md](references/event-oa.md) | 选择六个 OA EventKey、组合消费或解析审批字段 |
-| HR 生命周期事件 | [event-hr.md](references/event-hr.md) | 选择两个 HR EventKey、理解 HSF 后端边界和保守 payload |
+| HR 生命周期事件 | [event-hr.md](references/event-hr.md) | 选择四个 HR EventKey、理解 HSF 后端边界和保守 payload |

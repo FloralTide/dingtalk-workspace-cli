@@ -23,30 +23,32 @@ import (
 )
 
 const (
-	EventMention                      = "user_im_message_receive_at"
-	EventSingleChat                   = "user_im_message_receive_o2o"
-	EventInChat                       = "user_im_message_receive_group"
-	EventFromUser                     = "user_im_message_receive_user"
-	EventAllSingleChat                = "user_im_message_receive_o2o_all"
-	EventAllGroupChat                 = "user_im_message_receive_group_all"
-	EventReadO2O                      = "user_im_message_read_o2o"
-	EventReadGroup                    = "user_im_message_read_group"
-	EventRecallO2O                    = "user_im_message_recall_o2o"
-	EventRecallGroup                  = "user_im_message_recall_group"
-	EventReactionO2O                  = "user_im_message_reaction_o2o"
-	EventReactionGroup                = "user_im_message_reaction_group"
-	EventGroupUpdated                 = "user_im_group_updated"
-	EventGroupMemberAdded             = "user_im_group_member_added"
-	EventGroupMemberExited            = "user_im_group_member_exited"
-	EventGroupDisbanded               = "user_im_group_disbanded"
-	EventOAApprovalTaskCreated        = "user_oa_approval_task_created"
-	EventOAApprovalTaskFinished       = "user_oa_approval_task_finished"
-	EventOAApprovalTaskRedirected     = "user_oa_approval_task_redirected"
-	EventOAApprovalInstanceStarted    = "user_oa_approval_instance_started"
-	EventOAApprovalInstanceTerminated = "user_oa_approval_instance_terminated"
-	EventOAApprovalInstanceFinished   = "user_oa_approval_instance_finished"
-	EventHRMRegularLifecycleChanged   = "user_hrm_regular_lifecycle_changed"
-	EventHRMTransferLifecycleChanged  = "user_hrm_transfer_lifecycle_changed"
+	EventMention                        = "user_im_message_receive_at"
+	EventSingleChat                     = "user_im_message_receive_o2o"
+	EventInChat                         = "user_im_message_receive_group"
+	EventFromUser                       = "user_im_message_receive_user"
+	EventAllSingleChat                  = "user_im_message_receive_o2o_all"
+	EventAllGroupChat                   = "user_im_message_receive_group_all"
+	EventReadO2O                        = "user_im_message_read_o2o"
+	EventReadGroup                      = "user_im_message_read_group"
+	EventRecallO2O                      = "user_im_message_recall_o2o"
+	EventRecallGroup                    = "user_im_message_recall_group"
+	EventReactionO2O                    = "user_im_message_reaction_o2o"
+	EventReactionGroup                  = "user_im_message_reaction_group"
+	EventGroupUpdated                   = "user_im_group_updated"
+	EventGroupMemberAdded               = "user_im_group_member_added"
+	EventGroupMemberExited              = "user_im_group_member_exited"
+	EventGroupDisbanded                 = "user_im_group_disbanded"
+	EventOAApprovalTaskCreated          = "user_oa_approval_task_created"
+	EventOAApprovalTaskFinished         = "user_oa_approval_task_finished"
+	EventOAApprovalTaskRedirected       = "user_oa_approval_task_redirected"
+	EventOAApprovalInstanceStarted      = "user_oa_approval_instance_started"
+	EventOAApprovalInstanceTerminated   = "user_oa_approval_instance_terminated"
+	EventOAApprovalInstanceFinished     = "user_oa_approval_instance_finished"
+	EventHRMRegularLifecycleChanged     = "user_hrm_regular_lifecycle_changed"
+	EventHRMTransferLifecycleChanged    = "user_hrm_transfer_lifecycle_changed"
+	EventHRMEntryLifecycleChanged       = "user_hrm_entry_lifecycle_changed"
+	EventHRMTerminationLifecycleChanged = "user_hrm_termination_lifecycle_changed"
 )
 
 const (
@@ -364,6 +366,30 @@ var definitions = []Definition{
 		EventKey:            EventHRMTransferLifecycleChanged,
 		DisplayName:         "员工调岗生命周期变更",
 		Description:         "当前用户的员工调岗生命周期发生变更",
+		Category:            "hr",
+		RuleType:            "all",
+		Status:              StatusEnabled,
+		RequiredParams:      nil,
+		Auth:                map[string]any{"identity": "user"},
+		Public:              true,
+		OmitEmptyFilterRule: true,
+	},
+	{
+		EventKey:            EventHRMEntryLifecycleChanged,
+		DisplayName:         "员工入职生命周期变更",
+		Description:         "当前用户的员工入职生命周期发生变更",
+		Category:            "hr",
+		RuleType:            "all",
+		Status:              StatusEnabled,
+		RequiredParams:      nil,
+		Auth:                map[string]any{"identity": "user"},
+		Public:              true,
+		OmitEmptyFilterRule: true,
+	},
+	{
+		EventKey:            EventHRMTerminationLifecycleChanged,
+		DisplayName:         "员工离职生命周期变更",
+		Description:         "当前用户的员工离职生命周期发生变更",
 		Category:            "hr",
 		RuleType:            "all",
 		Status:              StatusEnabled,

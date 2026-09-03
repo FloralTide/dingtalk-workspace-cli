@@ -26,6 +26,8 @@ func TestCrossPlatformCoveragePersonalHRMEventListSchemaAndValidation(t *testing
 	eventKeys := []string{
 		personal.EventHRMRegularLifecycleChanged,
 		personal.EventHRMTransferLifecycleChanged,
+		personal.EventHRMEntryLifecycleChanged,
+		personal.EventHRMTerminationLifecycleChanged,
 	}
 
 	list := newEventListCommand()

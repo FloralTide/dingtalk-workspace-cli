@@ -938,7 +938,9 @@ func isOAEvent(eventKey string) bool {
 
 func isHRMEvent(eventKey string) bool {
 	return eventKey == EventHRMRegularLifecycleChanged ||
-		eventKey == EventHRMTransferLifecycleChanged
+		eventKey == EventHRMTransferLifecycleChanged ||
+		eventKey == EventHRMEntryLifecycleChanged ||
+		eventKey == EventHRMTerminationLifecycleChanged
 }
 
 func isOAApprovalTaskEvent(eventKey string) bool {

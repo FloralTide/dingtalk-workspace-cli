@@ -136,6 +136,8 @@ func TestClientCreateRuleBasedSubscriptionsUsesDocumentedRuleParam(t *testing.T)
 		{"oa_approval_instance_finished", EventOAApprovalInstanceFinished, RuleOptions{}, map[string]any{}},
 		{"hrm_regular_lifecycle_changed", EventHRMRegularLifecycleChanged, RuleOptions{}, nil},
 		{"hrm_transfer_lifecycle_changed", EventHRMTransferLifecycleChanged, RuleOptions{}, nil},
+		{"hrm_entry_lifecycle_changed", EventHRMEntryLifecycleChanged, RuleOptions{}, nil},
+		{"hrm_termination_lifecycle_changed", EventHRMTerminationLifecycleChanged, RuleOptions{}, nil},
 		{"read_group", EventReadGroup, RuleOptions{GroupID: "cid-1"}, map[string]any{"openConversationId": "cid-1"}},
 		{"recall_group", EventRecallGroup, RuleOptions{GroupID: "cid-1"}, map[string]any{"openConversationId": "cid-1"}},
 		{"reaction_group", EventReactionGroup, RuleOptions{GroupID: "cid-1"}, map[string]any{"openConversationId": "cid-1"}},

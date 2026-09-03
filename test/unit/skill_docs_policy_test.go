@@ -281,7 +281,7 @@ func TestEventSkillFrontmatterAdvertisesGroupMemberLifecycle(t *testing.T) {
 			"群成员退出",
 			"审批任务创建/完成/转交",
 			"审批实例发起/终止/完成",
-			"员工转正/调岗",
+			"员工转正/调岗/入职/离职",
 		} {
 			if !strings.Contains(frontmatter, required) {
 				t.Errorf("%s frontmatter missing event discovery trigger %q", path, required)
@@ -308,7 +308,7 @@ func TestStandaloneEventSkillOwnsAllPersonalEventContracts(t *testing.T) {
 		"<!-- dws-intent: event.listen.oa -->",
 		"<!-- dws-intent: event.listen.hr -->",
 		"16 个 EventKey",
-		"24 个公开 EventKey",
+		"26 个公开 EventKey",
 	} {
 		if !strings.Contains(string(skillContent), required) {
 			t.Errorf("%s missing standalone event contract %q", skillPath, required)
@@ -365,6 +365,10 @@ func TestStandaloneEventSkillOwnsAllPersonalEventContracts(t *testing.T) {
 		"user_oa_approval_instance_started",
 		"user_oa_approval_instance_terminated",
 		"user_oa_approval_instance_finished",
+		"user_hrm_regular_lifecycle_changed",
+		"user_hrm_transfer_lifecycle_changed",
+		"user_hrm_entry_lifecycle_changed",
+		"user_hrm_termination_lifecycle_changed",
 	}
 	for _, eventKey := range allEventKeys {
 		if !strings.Contains(combined.String(), eventKey) {

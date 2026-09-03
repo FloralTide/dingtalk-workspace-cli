@@ -1,6 +1,6 @@
 # dws event — 个人 IM、OA 审批与 HR 生命周期事件
 
-通过个人 Stream 长连接监听当前用户的消息、群生命周期、OA 审批及员工转正/调岗生命周期事件，NDJSON 输出到 stdout。普通 IM 监听默认使用 `dws event +listen-im`；OA、HR、群生命周期、显式 EventKey 或底层控制使用 `dws event consume`。不要用轮询模拟事件。
+通过个人 Stream 长连接监听当前用户的消息、群生命周期、OA 审批及员工转正/调岗/入职/离职生命周期事件，NDJSON 输出到 stdout。普通 IM 监听默认使用 `dws event +listen-im`；OA、HR、群生命周期、显式 EventKey 或底层控制使用 `dws event consume`。不要用轮询模拟事件。
 
 ## 运行方式
 
@@ -52,8 +52,10 @@
 | `user_oa_approval_instance_finished` | 审批实例完成，发送给审批单发起人 | 无 |
 | `user_hrm_regular_lifecycle_changed` | 当前用户的员工转正生命周期发生变化 | 无 |
 | `user_hrm_transfer_lifecycle_changed` | 当前用户的员工调岗生命周期发生变化 | 无 |
+| `user_hrm_entry_lifecycle_changed` | 当前用户的员工入职生命周期发生变化 | 无 |
+| `user_hrm_termination_lifecycle_changed` | 当前用户的员工离职生命周期发生变化 | 无 |
 
-只承认上表 24 个事件码。默认身份是当前 OAuth 用户。六个 OA 与两个 HR 事件均使用 `all`，不需要目标参数；OA 使用空对象 `filterRule={}`，HR Provider 不支持过滤规则，因此 HR 请求省略 `filterRule`。
+只承认上表 26 个事件码。默认身份是当前 OAuth 用户。六个 OA 与四个 HR 事件均使用 `all`，不需要目标参数；OA 使用空对象 `filterRule={}`，HR Provider 不支持过滤规则，因此 HR 请求省略 `filterRule`。
 
 ## Intent mapping
 
@@ -84,7 +86,9 @@
 | "同时监听全部已公开 OA 事件" | 一个 consume 放入六个 OA event key，不加目标或消息过滤参数 |
 | "员工转正状态变化时通知我" | `event consume user_hrm_regular_lifecycle_changed --flatten -f ndjson` |
 | "员工调岗时通知我" | `event consume user_hrm_transfer_lifecycle_changed --flatten -f ndjson` |
-| "同时监听转正和调岗变化" | 一个 consume 放入两个 HR event key，不加目标或过滤参数 |
+| "员工入职时通知我" | `event consume user_hrm_entry_lifecycle_changed --flatten -f ndjson` |
+| "员工离职时通知我" | `event consume user_hrm_termination_lifecycle_changed --flatten -f ndjson` |
+| "同时监听全部 HR 生命周期变化" | 一个 consume 放入四个 HR event key，不加目标或过滤参数 |
 | "查看个人事件 schema" | `dws event schema <event_key> --flatten` |
 | "看个人事件订阅状态" | `dws event status --event <event_key>` |
 | "停止这个个人事件订阅" | `dws event stop <subscribe_id> --dry-run`，确认后改用 `--yes` |
@@ -222,7 +226,7 @@ dws event stop --all --yes
 
 ## 订阅创建失败与重试预算
 
-以下约束适用于全部 24 个公开个人事件（16 IM + 6 OA + 2 HR）及多事件中的每一项，只治理 ready 前的订阅创建。
+以下约束适用于全部 26 个公开个人事件（16 IM + 6 OA + 4 HR）及多事件中的每一项，只治理 ready 前的订阅创建。
 
 - `0/2/1` 是 **Agent/host 编排约束**，不是 CLI 持久化硬总次数上限。每次 `dws event consume` 调用对每个逻辑订阅最多发送一次订阅创建 HTTP 请求，进程内不会自动重试。CLI 本地状态只持久化 `in_flight`、`cooldown`、`terminal_hold` 三种保护状态，不持久化或计算跨调用的 Agent/host 尝试次数。
 - 解析人名或群名、执行 `event consume` 以及后续 `event status/stop` 必须使用同一个 `--profile`。不得把其它 profile 下解析出的 userId、openDingtalkId 或 openConversationId 直接带入当前 profile 的订阅。
